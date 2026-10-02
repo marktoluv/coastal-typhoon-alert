@@ -1,164 +1,157 @@
-const demoStorms = {
-  lanzhou: {
-    name: "澜舟", romanized: "LANZHOU · 虚构名称", number: "演示 01",
-    category: "台风 · 演示强度", summary: "模拟中心位于东海中部，向西北方向移动。",
-    position: "东海中部（虚构位置）", coordinates: "北纬 25.8° · 东经 123.4°（演示）",
-    direction: "西北", speed: "每小时 18 公里（演示）", windLevel: "12 级", windSpeed: "33 米/秒（演示）",
-    observedAt: "模拟观测时刻：09月18日 08:00 · 数据源：本站虚构样本",
-    observed: [
-      { x: 170, y: 418, time: "09月17日 08:00", place: "海域 A（虚构）" },
-      { x: 272, y: 344, time: "09月17日 20:00", place: "海域 B（虚构）" },
-      { x: 382, y: 276, time: "09月18日 08:00", place: "东海中部（虚构）" }
-    ],
-    forecast: [
-      { x: 466, y: 215, time: "09月18日 20:00", place: "预报点 A（虚构）" },
-      { x: 530, y: 160, time: "09月19日 08:00", place: "预报点 B（虚构）" }
-    ]
-  },
-  wanghai: {
-    name: "望海", romanized: "WANGHAI · 虚构名称", number: "演示 02",
-    category: "强热带风暴 · 演示强度", summary: "模拟中心位于南海东北部，向北方向移动。",
-    position: "南海东北部（虚构位置）", coordinates: "北纬 18.4° · 东经 117.2°（演示）",
-    direction: "北", speed: "每小时 12 公里（演示）", windLevel: "10 级", windSpeed: "25 米/秒（演示）",
-    observedAt: "模拟观测时刻：09月18日 08:00 · 数据源：本站虚构样本",
-    observed: [
-      { x: 210, y: 445, time: "09月17日 08:00", place: "海域 C（虚构）" },
-      { x: 260, y: 365, time: "09月17日 20:00", place: "海域 D（虚构）" },
-      { x: 305, y: 285, time: "09月18日 08:00", place: "南海东北部（虚构）" }
-    ],
-    forecast: [
-      { x: 322, y: 212, time: "09月18日 20:00", place: "预报点 C（虚构）" },
-      { x: 343, y: 145, time: "09月19日 08:00", place: "预报点 D（虚构）" }
-    ]
-  }
-};
-
-const demoAlerts = {
-  taizhou: {
-    level: "yellow", title: "台风黄色预警（演示）", region: "浙江省台州市椒江区（演示）",
-    time: "09月18日 08:15（虚构）",
-    message: "模拟情景：当地可能受台风外围影响，沿海出现较强风。此信息不代表该地区实际天气或已发布预警。",
-    guidance: "演示防护提示：检查门窗和室外物品，减少危险的户外活动；实际行动请依据当地气象与应急部门通知。"
-  },
-  fuzhou: {
-    level: "orange", title: "台风橙色预警（演示）", region: "福建省福州市仓山区（演示）",
-    time: "09月18日 08:20（虚构）",
-    message: "模拟情景：当地预计出现较强台风影响。此等级只是界面样本，并非福州市当前的官方预警。",
-    guidance: "演示防护提示：留在坚固安全的室内，关注官方转移与停课通知；不要依据本页安排出行。"
-  },
-  shantou: {
-    level: "none", title: "无生效预警示例", region: "广东省汕头市金平区（演示）",
-    time: "09月18日 08:25（虚构）",
-    message: "模拟情景：演示数据集中未设置该地区的台风预警。这不表示当地当前没有风险或没有官方预警。",
-    guidance: "请打开官方渠道核对实际预警；没有预警信号也应关注天气变化。"
-  },
-  ningbo: {
-    level: "unavailable", title: "预警数据不可用示例", region: "浙江省宁波市海曙区（演示）",
-    time: "未提供",
-    message: "模拟情景：预警数据源暂时不可用，无法判断当地是否存在生效预警。",
-    guidance: "请直接查看当地气象部门或中央气象台的最新信息，不要把数据缺失理解为没有预警。"
-  }
-};
-
-const $ = (id) => document.getElementById(id);
-const svgNS = "http://www.w3.org/2000/svg";
+const $ = id => document.getElementById(id);
+const svgNS = 'http://www.w3.org/2000/svg';
+const sourceUrl = 'https://typhoon.slt.zj.gov.cn/';
+let snapshot = null;
+let networkError = false;
 
 function svgElement(name, attributes) {
   const element = document.createElementNS(svgNS, name);
-  Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, String(value)));
+  for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, String(value));
   return element;
 }
 
-function renderAlert(key) {
-  const alert = demoAlerts[key] || demoAlerts.taizhou;
-  $("alert-panel").dataset.level = alert.level;
-  $("alert-title").textContent = alert.title;
-  $("alert-region").textContent = alert.region;
-  $("alert-time").textContent = alert.time;
-  $("alert-message").textContent = alert.message;
-  $("alert-guidance").textContent = alert.guidance;
+function formatTime(value) {
+  if (!value || !Number.isFinite(Date.parse(value))) return '时间未提供';
+  return new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(value));
+}
+
+function position(point) {
+  return `北纬 ${point.lat.toFixed(1)}° · 东经 ${point.lng.toFixed(1)}°`;
+}
+
+function timeAge(value) {
+  return Date.now() - Date.parse(value);
+}
+
+function dataState() {
+  if (networkError) return { title: '数据读取失败', detail: '无法确认最新状态，请直接查看官方台风路径。', kind: 'error' };
+  if (!snapshot) return { title: '数据读取中', detail: '正在读取台风路径数据。', kind: 'loading' };
+  if (timeAge(snapshot.fetchedAt) > 45 * 60_000 || timeAge(snapshot.fetchedAt) < -10 * 60_000) {
+    return { title: '同步数据已过期', detail: `最近成功同步：${formatTime(snapshot.fetchedAt)}。请查看官方数据。`, kind: 'stale' };
+  }
+  if (snapshot.storms.some(storm => timeAge(storm.current.time) > 6 * 60 * 60_000 || timeAge(storm.current.time) < -10 * 60_000)) {
+    return { title: '观测资料可能已过期', detail: '来源系统的最新观测超过 6 小时，请以官方页面为准。', kind: 'stale' };
+  }
+  return { title: '数据已同步', detail: `最近同步：${formatTime(snapshot.fetchedAt)}。实况以各台风观测时刻为准；本地预警未接入。`, kind: 'ok' };
+}
+
+function renderStatus() {
+  const state = dataState();
+  $('status-banner').dataset.state = state.kind;
+  $('status-title').textContent = state.title;
+  $('status-detail').textContent = state.detail;
+  $('header-state').textContent = state.title;
+  $('header-time').textContent = snapshot ? `同步 ${formatTime(snapshot.fetchedAt)}` : '等待数据';
+  $('storm-flag').textContent = state.kind === 'ok' ? '来源实况' : '请核对时间';
 }
 
 function renderTrack(storm) {
-  const routes = $("track-routes");
-  const points = $("track-points");
-  routes.replaceChildren();
-  points.replaceChildren();
-  const current = storm.observed[storm.observed.length - 1];
-  const line = (items, className) => svgElement("polyline", {
-    points: items.map((point) => `${point.x},${point.y}`).join(" "), class: className
-  });
-  routes.append(line(storm.observed, "route-observed"));
-  routes.append(line([current, ...storm.forecast], "route-forecast"));
+  const grid = $('track-grid');
+  const routes = $('track-routes');
+  const points = $('track-points');
+  grid.replaceChildren(); routes.replaceChildren(); points.replaceChildren();
+  const all = [...storm.observed, ...storm.forecast];
+  const lngs = all.map(p => p.lng), lats = all.map(p => p.lat);
+  const minLngRaw = Math.min(...lngs), maxLngRaw = Math.max(...lngs);
+  const minLatRaw = Math.min(...lats), maxLatRaw = Math.max(...lats);
+  const lngPad = Math.max((maxLngRaw - minLngRaw) * 0.12, 1);
+  const latPad = Math.max((maxLatRaw - minLatRaw) * 0.12, 1);
+  const minLng = minLngRaw - lngPad, maxLng = maxLngRaw + lngPad;
+  const minLat = minLatRaw - latPad, maxLat = maxLatRaw + latPad;
+  const xy = p => ({ x: 85 + (p.lng - minLng) / (maxLng - minLng) * 650, y: 430 - (p.lat - minLat) / (maxLat - minLat) * 355 });
+  for (let n = 0; n <= 4; n++) {
+    const x = 85 + n * 162.5, y = 430 - n * 88.75;
+    grid.append(svgElement('line', { x1: x, y1: 75, x2: x, y2: 430, class: 'axis-line' }));
+    grid.append(svgElement('line', { x1: 85, y1: y, x2: 735, y2: y, class: 'axis-line' }));
+    const lngLabel = svgElement('text', { x, y: 465, 'text-anchor': 'middle', class: 'axis-label' });
+    lngLabel.textContent = `${(minLng + n * (maxLng - minLng) / 4).toFixed(1)}°E`;
+    grid.append(lngLabel);
+    const latLabel = svgElement('text', { x: 73, y: y + 6, 'text-anchor': 'end', class: 'axis-label' });
+    latLabel.textContent = `${(minLat + n * (maxLat - minLat) / 4).toFixed(1)}°N`;
+    grid.append(latLabel);
+  }
+  const line = (items, className) => svgElement('polyline', { points: items.map(p => { const c = xy(p); return `${c.x},${c.y}`; }).join(' '), class: className });
+  routes.append(line(storm.observed, 'route-observed'));
+  if (storm.forecast.length) routes.append(line([storm.current, ...storm.forecast], 'route-forecast'));
+  storm.observed.slice(0, -1).forEach(p => { const c = xy(p); points.append(svgElement('circle', { cx: c.x, cy: c.y, r: 6, class: 'route-point' })); });
+  storm.forecast.forEach(p => { const c = xy(p); points.append(svgElement('circle', { cx: c.x, cy: c.y, r: 6, class: 'route-point route-point--forecast' })); });
+  const center = xy(storm.current);
+  points.append(svgElement('circle', { cx: center.x, cy: center.y, r: 24, class: 'route-center-halo' }));
+  points.append(svgElement('circle', { cx: center.x, cy: center.y, r: 10, class: 'route-center' }));
+  const label = svgElement('text', { x: center.x > 580 ? center.x - 18 : center.x + 18, y: center.y - 16, 'text-anchor': center.x > 580 ? 'end' : 'start', class: 'route-point-label' });
+  label.textContent = '最新中心'; points.append(label);
+  $('track-svg-title').textContent = `${storm.name}的经纬度路径示意图`;
+  $('forecast-meta').textContent = storm.forecast.length
+    ? `实线为观测；虚线为${storm.forecastAgency}预报，发布于 ${formatTime(storm.forecastIssuedAt)}`
+    : '来源系统暂未提供“中国”预报路径';
 
-  storm.observed.slice(0, -1).forEach((point) => {
-    points.append(svgElement("circle", { cx: point.x, cy: point.y, r: 7, class: "route-point" }));
-  });
-  storm.forecast.forEach((point, index) => {
-    points.append(svgElement("circle", { cx: point.x, cy: point.y, r: 7, class: "route-point route-point--forecast" }));
-    const label = svgElement("text", { x: point.x + 13, y: point.y - 13, class: "route-point-label" });
-    label.textContent = index === 0 ? "+12h" : "+24h";
-    points.append(label);
-  });
-  points.append(svgElement("circle", { cx: current.x, cy: current.y, r: 26, class: "route-center-halo" }));
-  points.append(svgElement("circle", { cx: current.x, cy: current.y, r: 11, class: "route-center" }));
-  const centerLabel = svgElement("text", { x: current.x + 20, y: current.y - 19, class: "route-point-label" });
-  centerLabel.textContent = "模拟中心";
-  points.append(centerLabel);
-
-  const steps = [...storm.observed, ...storm.forecast];
-  const list = $("route-items");
-  list.replaceChildren();
-  steps.forEach((point, index) => {
-    const item = document.createElement("li");
-    const isForecast = index >= storm.observed.length;
-    if (isForecast) item.className = "forecast-step";
-    const kind = document.createElement("small");
-    kind.textContent = isForecast ? `模拟预报 +${(index - storm.observed.length + 1) * 12}小时` : "模拟观测";
-    const time = document.createElement("strong");
-    time.textContent = point.time;
-    const place = document.createElement("span");
-    place.textContent = point.place;
-    item.append(kind, time, place);
-    list.append(item);
-  });
+  const list = $('route-items'); list.replaceChildren();
+  for (const [index, p] of all.entries()) {
+    const forecast = index >= storm.observed.length;
+    const item = document.createElement('li'); if (forecast) item.className = 'forecast-step';
+    const kind = document.createElement('small'); kind.textContent = forecast ? `${storm.forecastAgency}预报` : '已观测';
+    const time = document.createElement('strong'); time.textContent = formatTime(p.time);
+    const coords = document.createElement('span'); coords.textContent = position(p);
+    item.append(kind, time, coords); list.append(item);
+  }
 }
 
-function renderStorm(key) {
-  const storm = demoStorms[key] || demoStorms.lanzhou;
-  $("storm-number").textContent = storm.number;
-  $("storm-name").textContent = storm.name;
-  $("storm-romanized").textContent = storm.romanized;
-  $("storm-category").textContent = storm.category;
-  $("storm-summary").textContent = storm.summary;
-  $("storm-position").textContent = storm.position;
-  $("storm-coordinates").textContent = storm.coordinates;
-  $("storm-direction").textContent = storm.direction;
-  $("storm-speed").textContent = storm.speed;
-  $("storm-wind-level").textContent = storm.windLevel;
-  $("storm-wind-speed").textContent = storm.windSpeed;
-  $("storm-observed-at").textContent = storm.observedAt;
-  $("track-svg-title").textContent = `${storm.name}的虚构路径示意图`;
+function renderStorm(storm) {
+  const p = storm.current;
+  $('storm-number').textContent = `编号 ${storm.id}`;
+  $('storm-name').textContent = storm.name;
+  $('storm-romanized').textContent = storm.englishName || '英文名暂未提供';
+  $('storm-category').textContent = p.category || '强度暂未提供';
+  $('storm-summary').textContent = p.location || `中心位于${position(p)}，向${p.direction || '未知方向'}移动。`;
+  $('storm-position').textContent = p.location || '地理描述暂未提供';
+  $('storm-coordinates').textContent = position(p);
+  $('storm-direction').textContent = p.direction || '暂未提供';
+  $('storm-speed').textContent = p.moveSpeed === null ? '移速暂未提供' : `移速 ${p.moveSpeed} 公里/小时`;
+  $('storm-wind-level').textContent = p.windLevel === null ? '暂未提供' : `${p.windLevel} 级`;
+  $('storm-wind-speed').textContent = p.windSpeed === null ? '风速暂未提供' : `${p.windSpeed} 米/秒`;
+  $('storm-observed-at').textContent = `观测时间：${formatTime(p.time)}（北京时间） · 来源：浙江省水利厅台风路径系统`;
   renderTrack(storm);
 }
 
-function getSavedRegion() {
-  try { return localStorage.getItem("demo-region"); } catch { return null; }
+function clearStorm(message) {
+  $('storm-name').textContent = message;
+  for (const id of ['storm-number','storm-romanized','storm-category','storm-summary','storm-position','storm-coordinates','storm-direction','storm-speed','storm-wind-level','storm-wind-speed','storm-observed-at']) $(id).textContent = '—';
+  for (const id of ['track-grid','track-routes','track-points','route-items']) $(id).replaceChildren();
+  $('forecast-meta').textContent = `请查看 ${sourceUrl} 核对最新信息`;
 }
 
-function saveRegion(region) {
-  try { localStorage.setItem("demo-region", region); } catch { /* 页面仍可正常使用 */ }
+function validSnapshot(data) {
+  return data && data.schemaVersion === 1 && ['active','none'].includes(data.status) && Number.isFinite(Date.parse(data.fetchedAt))
+    && Array.isArray(data.storms) && data.storms.every(s => s.id && s.name && s.current && Number.isFinite(Date.parse(s.current.time)) && Array.isArray(s.observed) && s.observed.length && Array.isArray(s.forecast));
 }
 
-const regionSelect = $("region-select");
-const stormSelect = $("storm-select");
-const savedRegion = getSavedRegion();
-if (savedRegion && demoAlerts[savedRegion]) regionSelect.value = savedRegion;
-renderAlert(regionSelect.value);
-renderStorm(stormSelect.value);
+async function loadData() {
+  try {
+    const response = await fetch(`./data/latest.json?t=${Date.now()}`, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    if (!validSnapshot(data)) throw new Error('Invalid snapshot');
+    snapshot = data; networkError = false;
+    const select = $('storm-select'); select.replaceChildren();
+    for (const storm of data.storms) {
+      const option = document.createElement('option'); option.value = storm.id; option.textContent = `${storm.name} · ${storm.id}`; select.append(option);
+    }
+    select.disabled = data.storms.length < 2;
+    if (data.storms.length) renderStorm(data.storms[0]);
+    else { select.add(new Option('当前无活动台风', '')); clearStorm('当前无活动台风'); }
+  } catch (error) {
+    console.error('Typhoon snapshot unavailable', error);
+    networkError = true;
+    if (!snapshot) clearStorm('数据暂不可用');
+  }
+  renderStatus();
+}
 
-regionSelect.addEventListener("change", () => {
-  renderAlert(regionSelect.value);
-  saveRegion(regionSelect.value);
+$('storm-select').addEventListener('change', event => {
+  const storm = snapshot?.storms.find(item => item.id === event.target.value);
+  if (storm) renderStorm(storm);
 });
-stormSelect.addEventListener("change", () => renderStorm(stormSelect.value));
+loadData();
+setInterval(loadData, 5 * 60_000);
+setInterval(renderStatus, 60_000);
+
