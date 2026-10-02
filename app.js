@@ -37,6 +37,7 @@ function dataState() {
 
 function renderStatus() {
   const state = dataState();
+  document.body.dataset.state = state.kind;
   $('status-banner').dataset.state = state.kind;
   $('status-title').textContent = state.title;
   $('status-detail').textContent = state.detail;
@@ -154,4 +155,5 @@ $('storm-select').addEventListener('change', event => {
 loadData();
 setInterval(loadData, 5 * 60_000);
 setInterval(renderStatus, 60_000);
+
 
