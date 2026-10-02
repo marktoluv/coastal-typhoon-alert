@@ -1,4 +1,4 @@
-# 沿海台风观察
+# 谷姐风信
 
 面向沿海居民的台风实况与路径信息页面。当前接入[浙江省水利厅实时台风路径系统](https://typhoon.slt.zj.gov.cn/)公开展示的数据，显示活动台风名称、编号、中心经纬度、移向、移速、中心附近最大风力、最近观测路径与来源系统标记为“中国”的预报路径。
 
@@ -23,4 +23,5 @@
 仓库 Settings → Pages → Build and deployment → Source 选择 **GitHub Actions**。工作流位于 `.github/workflows/deploy-pages.yml`，从官方来源生成快照并部署到 GitHub Pages。项目站点路径为 `https://marktoluv.github.io/coastal-typhoon-alert/`。
 
 台风中心风力与本地预警级别没有直接对应关系，本站不会自行发布或推算任何级别的预警。
+
 
