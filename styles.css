@@ -43,30 +43,23 @@ body[data-state="ok"] .header-meta__dot { background: #4da88e; box-shadow: 0 0 0
 .section-topline { display: flex; justify-content: space-between; align-items: end; gap: 1.25rem; margin-bottom: 1.35rem; }
 .section-topline h2, .advice h2 { margin: .12rem 0 0; font-size: clamp(1.45rem, 2.1vw, 2rem); letter-spacing: -.035em; line-height: 1.3; }
 .section-kicker { margin: 0; color: var(--sea); font-size: .82rem; font-weight: 700; letter-spacing: .055em; }
-.region-picker, .storm-picker { display: flex; flex-direction: column; gap: .27rem; color: var(--ink-soft); font-size: .76rem; font-weight: 700; }
+.storm-picker { display: flex; flex-direction: column; gap: .27rem; color: var(--ink-soft); font-size: .76rem; font-weight: 700; }
 select { min-width: 230px; max-width: 100%; padding: .62rem 2.2rem .62rem .8rem; color: var(--ink); background: #fff; border: 1px solid #afd1d7; border-radius: 6px; cursor: pointer; }
 
-.alert-section { padding-bottom: 3.2rem; }
-.alert-panel { display: grid; grid-template-columns: minmax(230px, .37fr) minmax(0, 1fr); min-height: 226px; border: 1px solid #e9c869; background: #fffaf0; }
-.alert-panel__signal { display: flex; align-items: flex-start; gap: 1rem; padding: 2rem clamp(1.3rem, 2.3vw, 2.35rem); background: #f5d477; color: #45300c; }
-.alert-panel__glyph { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border: 2px solid currentColor; border-radius: 50%; font-size: 1.35rem; font-weight: 800; flex: none; }
-.alert-panel__overline { margin: .05rem 0 .45rem; font-size: .76rem; font-weight: 700; }
-.alert-panel h3 { margin: 0; font-size: clamp(1.3rem, 1.8vw, 1.8rem); line-height: 1.3; }
-.alert-panel__body { padding: 1.5rem clamp(1.3rem, 2.3vw, 2.35rem); }
-.alert-panel__message { max-width: 65ch; margin: 0 0 1rem; font-size: 1rem; font-weight: 650; }
-.alert-panel__facts { display: flex; flex-wrap: wrap; gap: .5rem 2.5rem; margin: 0 0 .75rem; }
-.alert-panel__facts div { min-width: 9rem; }
-.alert-panel__facts dt { color: var(--ink-soft); font-size: .73rem; }
-.alert-panel__facts dd { margin: .08rem 0 0; font-size: .85rem; font-weight: 700; }
-.alert-panel__guidance { max-width: 73ch; margin: .7rem 0 1rem; color: #47616b; font-size: .86rem; }
+.outlook-section { padding-bottom: 3.2rem; }
+.outlook-source { margin: 0; color: var(--ink-soft); font-size: .8rem; }
+.outlook-panel { display: grid; grid-template-columns: minmax(220px, .34fr) minmax(0, 1fr); border: 1px solid var(--line); background: #fff; }
+.outlook-intro { padding: 1.5rem clamp(1.25rem, 2.2vw, 2rem); background: #eaf7f8; }
+.outlook-intro strong { display: block; color: #176f7b; font-size: 1.16rem; line-height: 1.4; }
+.outlook-intro p { max-width: 28ch; margin: .65rem 0 1.25rem; color: #405f68; font-size: .88rem; }
+.outlook-items { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: stretch; margin: 0; padding: 1.4rem 1rem; list-style: none; }
+.outlook-items li { min-width: 0; padding: .25rem 1.1rem; border-left: 1px solid var(--line); }
+.outlook-items small { display: block; color: #176f7b; font-size: .75rem; font-weight: 750; }
+.outlook-items strong { display: block; margin: .35rem 0 .65rem; color: var(--ink); font-size: 1.13rem; line-height: 1.35; }
+.outlook-items span { display: block; margin-top: .2rem; color: #45656e; font-size: .82rem; }
+.outlook-items .outlook-empty { grid-column: 1 / -1; align-self: center; color: var(--ink-soft); font-size: .91rem; }
 .text-link { color: #075d68; font-size: .85rem; font-weight: 750; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .section-caption { margin: .75rem 0 0; color: var(--ink-soft); font-size: .78rem; }
-.alert-panel[data-level="orange"] { border-color: #da916a; background: #fff8f2; }
-.alert-panel[data-level="orange"] .alert-panel__signal { background: #a95028; color: #fff; }
-.alert-panel[data-level="none"] { border-color: var(--line); background: #f6faf9; }
-.alert-panel[data-level="none"] .alert-panel__signal { background: #dfece9; color: var(--navy); }
-.alert-panel[data-level="unavailable"] { border-color: #edd9b6; background: #fffdf8; }
-.alert-panel[data-level="unavailable"] .alert-panel__signal { background: #fff0d5; color: #675027; }
 
 .situation { padding: 2.1rem 0 3.3rem; border-top: 1px solid var(--line); }
 .section-topline--compact { margin-bottom: 1.5rem; }
@@ -144,6 +137,8 @@ select { min-width: 230px; max-width: 100%; padding: .62rem 2.2rem .62rem .8rem;
   .observation__metrics { margin-top: 1rem; }
   .route-list { grid-template-columns: 1fr; }
   .advice { gap: 2rem; }
+  .outlook-panel { grid-template-columns: 1fr; }
+  .outlook-intro p { max-width: 65ch; }
 }
 @media (max-width: 680px) {
   .site-shell { padding: 0 1rem; }
@@ -157,13 +152,14 @@ select { min-width: 230px; max-width: 100%; padding: .62rem 2.2rem .62rem .8rem;
   .intro h1 { font-size: clamp(2rem, 8.5vw, 3.4rem); }
   .intro__note { display: none; }
   .section-topline { align-items: stretch; flex-direction: column; }
-  .region-picker, .storm-picker { width: 100%; }
+  .storm-picker { width: 100%; }
   select { width: 100%; }
-  .alert-panel { grid-template-columns: 1fr; }
-  .alert-panel__signal { padding: 1.2rem 1.1rem; align-items: center; }
-  .alert-panel__body { padding: 1.15rem 1.1rem 1.3rem; }
-  .alert-panel__facts { gap: .5rem 1rem; }
-  .alert-section { padding-bottom: 2.4rem; }
+  .outlook-source { font-size: .75rem; }
+  .outlook-intro { padding: 1.2rem 1.1rem; }
+  .outlook-intro p { max-width: none; margin: .4rem 0 .75rem; }
+  .outlook-items { grid-template-columns: 1fr; padding: .5rem 1.1rem; }
+  .outlook-items li { padding: .8rem .25rem; border-left: 0; border-top: 1px solid var(--line); }
+  .outlook-section { padding-bottom: 2.4rem; }
   .situation { padding-top: 1.75rem; }
   .observation { padding: 1.4rem 1.15rem; }
   .observation__identity { margin-top: 1.4rem; }
@@ -179,5 +175,6 @@ select { min-width: 230px; max-width: 100%; padding: .62rem 2.2rem .62rem .8rem;
   .site-footer { flex-direction: column; gap: 1rem; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
 
 

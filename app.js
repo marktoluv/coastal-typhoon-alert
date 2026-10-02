@@ -97,6 +97,33 @@ function renderTrack(storm) {
   }
 }
 
+function renderOutlook(storm, emptyMessage = '预报路径暂不可用，请查看官方台风路径。') {
+  const list = $('outlook-items');
+  list.replaceChildren();
+  if (!storm?.forecast.length) {
+    $('outlook-source').textContent = storm ? `${storm.name}的预报暂未提供` : '暂无可展示的预报资料';
+    const item = document.createElement('li');
+    item.className = 'outlook-empty';
+    item.textContent = emptyMessage;
+    list.append(item);
+    return;
+  }
+  $('outlook-source').textContent = `${storm.name}｜${storm.forecastAgency}｜预报发布：${formatTime(storm.forecastIssuedAt)}（北京时间）`;
+  for (const point of storm.forecast.slice(0, 3)) {
+    const item = document.createElement('li');
+    const hours = Math.round((Date.parse(point.time) - Date.parse(storm.current.time)) / 3_600_000);
+    const kind = document.createElement('small'); kind.textContent = `预报中心 · +${hours} 小时`;
+    const time = document.createElement('strong'); time.textContent = formatTime(point.time);
+    const coords = document.createElement('span'); coords.textContent = position(point);
+    const intensity = document.createElement('span');
+    intensity.textContent = `${point.category || '强度未提供'} · ${point.windLevel === null ? '风力未提供' : `${point.windLevel} 级`}`;
+    const wind = document.createElement('span');
+    wind.textContent = point.windSpeed === null ? '中心风速未提供' : `中心风速 ${point.windSpeed} 米/秒`;
+    item.append(kind, time, coords, intensity, wind);
+    list.append(item);
+  }
+}
+
 function renderStorm(storm) {
   const p = storm.current;
   $('storm-number').textContent = `编号 ${storm.id}`;
@@ -111,6 +138,7 @@ function renderStorm(storm) {
   $('storm-wind-level').textContent = p.windLevel === null ? '暂未提供' : `${p.windLevel} 级`;
   $('storm-wind-speed').textContent = p.windSpeed === null ? '风速暂未提供' : `${p.windSpeed} 米/秒`;
   $('storm-observed-at').textContent = `观测时间：${formatTime(p.time)}（北京时间） · 来源：浙江省水利厅台风路径系统`;
+  renderOutlook(storm);
   renderTrack(storm);
 }
 
@@ -119,6 +147,7 @@ function clearStorm(message) {
   for (const id of ['storm-number','storm-romanized','storm-category','storm-summary','storm-position','storm-coordinates','storm-direction','storm-speed','storm-wind-level','storm-wind-speed','storm-observed-at']) $(id).textContent = '—';
   for (const id of ['track-grid','track-routes','track-points','route-items']) $(id).replaceChildren();
   $('forecast-meta').textContent = `请查看 ${sourceUrl} 核对最新信息`;
+  renderOutlook(null, message === '当前无活动台风' ? '来源系统目前没有活动台风预报。' : '预报数据暂不可用，请查看官方台风路径。');
 }
 
 function validSnapshot(data) {
@@ -155,5 +184,6 @@ $('storm-select').addEventListener('change', event => {
 loadData();
 setInterval(loadData, 5 * 60_000);
 setInterval(renderStatus, 60_000);
+
 
 
