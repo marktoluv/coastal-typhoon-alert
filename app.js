@@ -59,7 +59,7 @@ function renderTrack(storm) {
   grid.replaceChildren(); routes.replaceChildren(); points.replaceChildren();
   const mobile = window.innerWidth <= 680;
   const chart = mobile
-    ? { width: 400, height: 350, left: 55, right: 374, top: 35, bottom: 298 }
+    ? { width: 400, height: 350, left: 75, right: 345, top: 35, bottom: 298 }
     : { width: 800, height: 500, left: 85, right: 735, top: 75, bottom: 430 };
   $('track-svg').setAttribute('viewBox', `0 0 ${chart.width} ${chart.height}`);
   const all = [...storm.observed, ...storm.forecast];
@@ -95,7 +95,12 @@ function renderTrack(storm) {
   points.append(svgElement('circle', { cx: center.x, cy: center.y, r: 24, class: 'route-center-halo' }));
   points.append(svgElement('circle', { cx: center.x, cy: center.y, r: 10, class: 'route-center' }));
   const labelLeft = center.x > chart.width * .7;
-  const label = svgElement('text', { x: labelLeft ? center.x - 18 : center.x + 18, y: center.y - 16, 'text-anchor': labelLeft ? 'end' : 'start', class: 'route-point-label' });
+  const label = svgElement('text', {
+    x: mobile ? center.x : labelLeft ? center.x - 18 : center.x + 18,
+    y: center.y - (mobile ? 31 : 16),
+    'text-anchor': mobile ? 'middle' : labelLeft ? 'end' : 'start',
+    class: 'route-point-label',
+  });
   label.textContent = '最新中心'; points.append(label);
   $('track-svg-title').textContent = `${storm.name}的经纬度路径示意图`;
   $('track-location').textContent = `来源位置：${storm.current.location || position(storm.current)}`;
